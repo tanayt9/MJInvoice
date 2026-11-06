@@ -88,14 +88,14 @@ input.hl-w,input.hl-m{background:#d4eefc;border-color:#4fb3e8;font-weight:700}[h
 <section class="panel form-ui">
   <h2>Customer &amp; invoice details</h2>
   <div class="grid">
-    <div class="field"><label>Invoice no.</label><input id="invNo"></div>
+    <div class="field"><label>Invoice no.</label><input class="hl-w" id="invNo"></div>
     <div class="field"><label>Date</label><input id="invDate" type="date"></div>
     <div class="field"><label>GST type</label><select id="gstType"><option value="local">Same state (CGST + SGST)</option><option value="igst">Other state (IGST 3%)</option></select></div>
-    <div class="field"><label>Customer name</label><input id="cName"></div>
-    <div class="field"><label>Mobile no.</label><input id="cMob" type="tel"></div>
+    <div class="field"><label>Customer name</label><input class="hl-w" id="cName"></div>
+    <div class="field"><label>Mobile no.</label><input class="hl-w" id="cMob" type="tel"></div>
     <div class="field"><label>UID</label><input id="cUid"></div>
   </div>
-  <div class="charge-row"><div class="field"><label>Address</label><input id="cAddr"></div><div class="field"><label>Advance paid (₹)</label><input id="adv" type="number" min="0" step="0.01" value="0"></div></div>
+  <div class="charge-row"><div class="field"><label>Address</label><input class="hl-w" id="cAddr"></div><div class="field"><label>Advance paid (₹)</label><input id="adv" type="number" min="0" step="0.01" value="0"></div></div>
 </section>
 <section class="panel form-ui">
   <h2>Item details</h2><p class="sub">HSN code, purity and gross weight for each item (net weight comes from the previous page).</p>
