@@ -114,7 +114,7 @@ input.hl-w,input.hl-m{background:#d4eefc;border-color:#4fb3e8;font-weight:700}[h
     <div class="field"><label>Order no.</label><input id="ordNo"></div>
     <div class="field"><label>Order date</label><input id="ordDate" type="date"></div>
   </div>
-  <div class="charge-row"><div class="field"><label>Hall mark details</label><input id="hmText" value="Jewellery hallmark details as applicable"></div></div>
+  <div class="charge-row"><div class="field"><label>Footer</label><input id="hmText" value="আমাদের তৈরী KDM/Hallmark গহনা তে কোনো বাদ দেওয়া হয় না"></div></div>
   <div class="actions"><button class="secondary" id="backBtn">← Back</button><button class="primary" id="printBtn">Print invoice</button></div>
 </section>
 <div class="inv" id="invoice"></div>
@@ -250,7 +250,7 @@ function renderInvoice(){
   <div class="tot"><table><tr><td>Hall Mark Charges</td><td>${f(hm)}</td></tr>${ig?`<tr><td>IGST @ 3%</td><td>${f(ii)}</td></tr>`:`<tr><td>CGST @ 1.5%</td><td>${f(cg)}</td></tr><tr><td>SGST @ 1.5%</td><td>${f(cg)}</td></tr>`}<tr class="b"><td>Total</td><td>${f(total)}</td></tr><tr><td>Round off</td><td>${(rnd<0?'-':'+')+f(Math.abs(rnd))}</td></tr><tr><td>Adv. Rs.</td><td>${adv?f(adv):''}</td></tr><tr class="b"><td>Grand Total</td><td>${f(grand)}</td></tr></table></div></div>
   <div class="ord">Order No.: ${dots(g('ordNo'))} &nbsp; Date: ${dmy(g('ordDate'))||'..............'}</div>
   <div class="sig"><span>Signature of Customer</span><span>Signature of Seller</span></div>
-  <div class="ord">HALL MARK - ${E(g('hmText'))}</div><div class="bar foot"></div>`;
+  <div class="ord">${E(g('hmText'))}</div><div class="bar foot"></div>`;
 }
 function goNext(){
   calculate();
@@ -266,6 +266,9 @@ $('step2').addEventListener('input',e=>{
 $('nextBtn').addEventListener('click',goNext);
 $('backBtn').addEventListener('click',()=>{$('step2').hidden=true;$('step1').hidden=false;window.scrollTo(0,0);});
 $('printBtn').addEventListener('click',()=>{renderInvoice();window.print();});
+// Remote on/off switch: set "active": false in manifest.json to show a maintenance message
+(async()=>{try{const m=await(await fetch('manifest.json',{cache:'no-store'})).json();
+if(m.active===false){document.body.innerHTML='<div style="font:18px/1.5 Arial,sans-serif;text-align:center;padding:90px 24px;color:#57204F"><div style="font-size:48px">🛠️</div><h2 style="margin:12px 0 6px">Page is not active</h2><p style="margin:0;color:#687180">'+((m.inactive_message||'This page is currently under maintenance. Please try again later.').replace(/[<>&]/g,''))+'</p></div>';}}catch(e){}})();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 loadRates();addItem();
 </script>
