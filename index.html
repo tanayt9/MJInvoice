@@ -266,9 +266,19 @@ $('step2').addEventListener('input',e=>{
 $('nextBtn').addEventListener('click',goNext);
 $('backBtn').addEventListener('click',()=>{$('step2').hidden=true;$('step1').hidden=false;window.scrollTo(0,0);});
 $('printBtn').addEventListener('click',()=>{renderInvoice();window.print();});
-// Remote on/off switch: set "active": false in manifest.json to show a maintenance message
-(async()=>{try{const m=await(await fetch('manifest.json',{cache:'no-store'})).json();
-if(m.active===false){document.body.innerHTML='<div style="font:18px/1.5 Arial,sans-serif;text-align:center;padding:90px 24px;color:#57204F"><div style="font-size:48px">🛠️</div><h2 style="margin:12px 0 6px">Page is not active</h2><p style="margin:0;color:#687180">'+((m.inactive_message||'This page is currently under maintenance. Please try again later.').replace(/[<>&]/g,''))+'</p></div>';}}catch(e){}})();
+// Remote on/off switch + non-business hours: both are read from manifest.json
+let blockedNow=false;
+async function accessCheck(){try{
+  const m=await(await fetch('manifest.json',{cache:'no-store'})).json();
+  let msg='';
+  if(m.active===false)msg=m.inactive_message||'This page is currently under maintenance. Please try again later.';
+  const h=String(m.nonbusiness_hours||'NA').match(/^\s*(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})\s*$/);
+  if(!msg&&h){const a=h[1]*60+ +h[2],b=h[3]*60+ +h[4],d=new Date(),n=d.getHours()*60+d.getMinutes();
+    if(a!==b&&(a<b?(n>=a&&n<b):(n>=a||n<b)))msg='This page is not available during non-business hours ('+m.nonbusiness_hours.trim()+'). Please try again later.';}
+  if(msg&&!blockedNow){blockedNow=true;document.body.innerHTML='<div style="font:18px/1.5 Arial,sans-serif;text-align:center;padding:90px 24px;color:#57204F"><div style="font-size:48px">🛠️</div><h2 style="margin:12px 0 6px">Page is not active</h2><p style="margin:0;color:#687180">'+msg.replace(/[<>&]/g,'')+'</p></div>';}
+  else if(!msg&&blockedNow)location.reload();
+}catch(e){}}
+accessCheck();setInterval(accessCheck,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)accessCheck();});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 loadRates();addItem();
 </script>
