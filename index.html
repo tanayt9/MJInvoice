@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#74336F">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Gold & Silver Bill Calculator</title>
 <style>
 :root{--ink:#20242b;--muted:#687180;--line:#e4e7ec;--gold:#9a6b12;--gold-bg:#fff8e8;--bg:#f5f6f8;--green:#18794e}
@@ -262,6 +265,7 @@ $('step2').addEventListener('input',e=>{
 $('nextBtn').addEventListener('click',goNext);
 $('backBtn').addEventListener('click',()=>{$('step2').hidden=true;$('step1').hidden=false;window.scrollTo(0,0);});
 $('printBtn').addEventListener('click',()=>{renderInvoice();window.print();});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 loadRates();addItem();
 </script>
 </body>
