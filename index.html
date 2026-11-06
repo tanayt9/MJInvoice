@@ -70,6 +70,7 @@ button{border:0;border-radius:8px;padding:10px 14px;font-weight:700;font-size:14
   <div class="calc-row tax"><span>CGST (1.5%)</span><span id="cgst">₹0.00</span></div>
   <div class="calc-row tax"><span>SGST (1.5%)</span><span id="sgst">₹0.00</span></div>
   <div class="calc-row"><span>Total GST (3%)</span><span id="gst">₹0.00</span></div>
+  <div class="calc-row"><span>Round off</span><span id="roundOff">+₹0.00</span></div>
   <div class="calc-row total"><span>Total bill amount</span><span id="grandTotal">₹0.00</span></div>
   <small>GST is calculated on the metal value + making charge + hallmark charge + additional charge.</small>
 </section>
@@ -83,7 +84,7 @@ button{border:0;border-radius:8px;padding:10px 14px;font-weight:700;font-size:14
 <section class="panel form-ui">
   <h2>Customer &amp; invoice details</h2>
   <div class="grid">
-    <div class="field"><label>Invoice no.</label><input id="invNo" value="188"></div>
+    <div class="field"><label>Invoice no.</label><input id="invNo"></div>
     <div class="field"><label>Date</label><input id="invDate" type="date"></div>
     <div class="field"><label>GST type</label><select id="gstType"><option value="local">Same state (CGST + SGST)</option><option value="igst">Other state (IGST 3%)</option></select></div>
     <div class="field"><label>Customer name</label><input id="cName"></div>
@@ -191,9 +192,9 @@ function calculate(){
     lastItems.push({name,metal,weight,rate,metalValue,making,hallmark,additional});
     details.push(`<div style="padding:9px 0;border-bottom:1px solid #ffffff20"><strong>${escapeHtml(name)}</strong><div class="calc-row"><span>${metal==='gold'?'Gold':'Silver'} · ${weight.toFixed(3)} g × ${money(rate)}</span><span>${money(metalValue)}</span></div><div class="calc-row"><span>Making charge</span><span>${money(making)}</span></div><div class="calc-row"><span>Hallmark charge</span><span>${money(hallmark)}</span></div><div class="calc-row"><span>Additional charge</span><span>${money(additional)}</span></div></div>`);
   });
-  const cgst=subtotal*0.015,sgst=subtotal*0.015,gst=cgst+sgst,total=subtotal+gst;
+  const cgst=subtotal*0.015,sgst=subtotal*0.015,gst=cgst+sgst,rawTotal=subtotal+gst,rnd=Math.round(rawTotal)-rawTotal,total=rawTotal+rnd;
   $('breakdown').innerHTML=details.length?details.join(''):'<div class="empty">Add an item and enter its weight to see the bill calculation.</div>';
-  $('subtotal').textContent=money(subtotal);$('cgst').textContent=money(cgst);$('sgst').textContent=money(sgst);$('gst').textContent=money(gst);$('grandTotal').textContent=money(total);
+  $('subtotal').textContent=money(subtotal);$('cgst').textContent=money(cgst);$('sgst').textContent=money(sgst);$('gst').textContent=money(gst);$('roundOff').textContent=(rnd<0?'-':'+')+money(Math.abs(rnd));$('grandTotal').textContent=money(total);
 }
 function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 $('goldRate').addEventListener('input',saveRates);
@@ -219,7 +220,7 @@ function gx(i,k,d){return (extras[i]&&extras[i][k]!==undefined)?extras[i][k]:d;}
 function buildExtras(){
   const items=lastItems.filter(i=>i.weight>0);
   $('extras').innerHTML=items.map((it,i)=>`<div class="item"><strong>${escapeHtml(it.name)} · ${it.weight.toFixed(3)} g</strong><div class="grid" style="margin-top:10px">
-  <div class="field"><label>HSN code</label><input data-i="${i}" data-k="hsn" value="${escapeHtml(gx(i,'hsn','7113'))}"></div>
+  <div class="field"><label>HSN code</label><input data-i="${i}" data-k="hsn" value="${escapeHtml(gx(i,'hsn',''))}"></div>
   <div class="field"><label>Purity</label><input data-i="${i}" data-k="purity" value="${escapeHtml(gx(i,'purity',it.metal==='gold'?'22K / 916':'925'))}"></div>
   <div class="field"><label>Gross weight (g)</label><input data-i="${i}" data-k="gross" value="${escapeHtml(gx(i,'gross',it.weight.toFixed(3)))}"></div></div></div>`).join('');
 }
@@ -229,7 +230,7 @@ function renderInvoice(){
   let rows='',taxable=0,hm=0;
   items.forEach((it,i)=>{
     const ch=it.making+it.additional,amt=it.metalValue+ch;taxable+=amt+it.hallmark;hm+=it.hallmark;
-    rows+=`<tr><td>${i+1}</td><td class="l">${E(it.name)} (${it.metal==='gold'?'Gold':'Silver'})</td><td>${E(gx(i,'hsn','7113'))}</td><td>${E(gx(i,'purity',it.metal==='gold'?'22K / 916':'925'))}</td><td>G: ${E(String(gx(i,'gross',it.weight.toFixed(3))))}<br>N: ${it.weight.toFixed(3)}</td><td>${f(it.rate)}</td><td>${f(it.metalValue)}</td><td>${f(ch)}</td><td>${f(amt)}</td></tr>`;
+    rows+=`<tr><td>${i+1}</td><td class="l">${E(it.name)} (${it.metal==='gold'?'Gold':'Silver'})</td><td>${E(gx(i,'hsn',''))}</td><td>${E(gx(i,'purity',it.metal==='gold'?'22K / 916':'925'))}</td><td>G: ${E(String(gx(i,'gross',it.weight.toFixed(3))))}<br>N: ${it.weight.toFixed(3)}</td><td>${f(it.rate)}</td><td>${f(it.metalValue)}</td><td>${f(ch)}</td><td>${f(amt)}</td></tr>`;
   });
   for(let i=items.length;i<6;i++)rows+='<tr><td>&nbsp;</td>'+'<td></td>'.repeat(8)+'</tr>';
   const ig=g('gstType')==='igst',cg=ig?0:taxable*.015,ii=ig?taxable*.03:0,total=taxable+cg*2+ii;
@@ -252,8 +253,6 @@ function goNext(){
   if(!lastItems.some(i=>i.weight>0)){alert('Enter the weight of at least one item first.');return;}
   $('step1').hidden=true;$('step2').hidden=false;buildExtras();renderInvoice();window.scrollTo(0,0);
 }
-const NO_KEY='matriLastInvoiceNo';
-try{const n=parseInt(localStorage.getItem(NO_KEY));if(n)$('invNo').value=n+1;}catch(e){}
 $('invDate').value=new Date().toISOString().slice(0,10);
 $('step2').addEventListener('input',e=>{
   const d=e.target.dataset;
@@ -263,7 +262,6 @@ $('step2').addEventListener('input',e=>{
 $('nextBtn').addEventListener('click',goNext);
 $('backBtn').addEventListener('click',()=>{$('step2').hidden=true;$('step1').hidden=false;window.scrollTo(0,0);});
 $('printBtn').addEventListener('click',()=>{renderInvoice();window.print();});
-window.addEventListener('afterprint',()=>{try{const n=parseInt($('invNo').value);if(n)localStorage.setItem(NO_KEY,n);}catch(e){}});
 loadRates();addItem();
 </script>
 </body>
