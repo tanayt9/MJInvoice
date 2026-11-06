@@ -30,7 +30,8 @@ button{border:0;border-radius:8px;padding:10px 14px;font-weight:700;font-size:14
 .footer-note{font-size:12px;color:var(--muted);margin-top:12px}
 @media(max-width:700px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rates{grid-template-columns:1fr 1fr}}
 @media(max-width:480px){.grid,.rates,.charge-row{grid-template-columns:1fr 1fr}.panel{padding:14px}.item{padding:12px}header{padding:20px 16px}}
-.hidden{display:none}[hidden]{display:none!important}
+.hidden{display:none}
+input.hl-w,input.hl-m{background:#d4eefc;border-color:#4fb3e8;font-weight:700}[hidden]{display:none!important}
 .inv{width:190mm;max-width:100%;margin:18px auto 0;border:2px solid #74336F;padding:3px;background:#fff;color:#57204F;font:12px/1.35 Arial,"Nirmala UI","Noto Sans Bengali",sans-serif;overflow-x:auto}
 .inv .bar{background:#74336F;color:#fff;text-align:center;font-weight:700;padding:1px 0}.inv .bar.foot{height:12px;margin-top:3px}
 .inv .top{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;position:relative}
@@ -146,15 +147,15 @@ function addItem(){
     <div class="grid">
       <div class="field"><label>Item name</label><select class="itemType">${ITEM_TYPES.map(t=>`<option>${t}</option>`).join('')}</select><input class="itemName hidden" placeholder="Type item name"></div>
       <div class="field"><label>Metal</label><select class="metal"><option value="gold">Gold</option><option value="silver">Silver</option></select></div>
-      <div class="field"><label>Weight (grams)</label><input class="weight" type="number" min="0" step="0.001" placeholder="e.g. 2"></div>
+      <div class="field"><label>Weight (grams)</label><input class="weight hl-w" type="number" min="0" step="0.001" placeholder="Enter weight"></div>
       <div class="field"><label>Rate (₹/gram)</label><input class="rate" type="number" readonly value="0"></div>
       <div class="field"><label>Metal value (₹)</label><input class="metalValue" readonly value="0.00"></div>
       <div class="field"><label>Making charge type</label><select class="makingType"><option value="weight">Per gram (₹/gram)</option><option value="fixed">Fixed amount (₹)</option></select></div>
     </div>
     <div class="charge-row">
-      <div class="field"><label class="makingLabel">Making charge (₹/gram)</label><input class="makingInput" type="number" min="0" step="0.01" placeholder="Enter amount"></div>
-      <div class="field"><label>Hallmark charge (₹)</label><input class="hallmark" type="number" min="0" step="0.01" value="0"></div>
-      <div class="field"><label>Additional charge (₹)</label><input class="additional" type="number" min="0" step="0.01" value="0"></div>
+      <div class="field"><label class="makingLabel">Making charge (₹/gram)</label><input class="makingInput hl-m" type="number" min="0" step="0.01" placeholder="Enter amount"></div>
+      <div class="field"><label>Hallmark charge (₹)</label><input class="hallmark" type="number" min="0" step="0.01" placeholder="0"></div>
+      <div class="field"><label>Additional charge (₹)</label><input class="additional" type="number" min="0" step="0.01" placeholder="0"></div>
       <div class="field"><label>Item total before GST (₹)</label><input class="itemSubtotal" readonly value="0.00"></div>
     </div>`;
   $('items').appendChild(el);
