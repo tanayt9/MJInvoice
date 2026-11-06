@@ -177,7 +177,7 @@ function calculate(){
   const silver=Number($('silverRate').value)||0;
   let subtotal=0;lastItems=[];
   const details=[];
-  document.querySelectorAll('.item').forEach((el,index)=>{
+  document.querySelectorAll('#items .item').forEach((el,index)=>{
     const metal=el.querySelector('.metal').value;
     const weight=Math.max(0,Number(el.querySelector('.weight').value)||0);
     const rate=metal==='gold'?gold:silver;
