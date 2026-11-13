@@ -44,7 +44,10 @@ input.hl-w,input.hl-m{background:#d4eefc;border-color:#4fb3e8;font-weight:700}[h
 .inv .tot table{margin:0}.inv .tot td{text-align:left;background:#FFF7FA}.inv .tot td+td{text-align:right}.inv .tot tr.b td{background:#FCE8F1;font-weight:700}
 .inv .ord{border-top:1px solid #57204F;margin-top:8px;padding:3px 4px}.inv .sig{display:flex;justify-content:space-between;border-top:1px solid #57204F;padding:14px 60px 2px;font-weight:700;font-size:11px}
 @page{size:A4;margin:6mm}
-@media print{body{background:#fff}header,#step1,.form-ui{display:none!important}#step2{padding:0;max-width:none}.inv{margin:0;width:100%;overflow:visible;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media print{body{background:#fff}header,#step1,.form-ui{display:none!important}#step2{padding:0;max-width:none}
+.inv{margin:0;width:100%;height:284mm;box-sizing:border-box;display:flex;flex-direction:column;break-after:page;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.inv:last-child{break-after:auto}.inv .tw{flex:1;display:flex;min-height:0}.inv .tw table{height:100%}.inv tr.fill{height:100%}}
+.inv tr.fill td{border-top:0;border-bottom:0;padding:0;height:auto}.inv b.invno{font-size:17px;min-width:0}
 </style>
 </head>
 <body>
@@ -114,10 +117,10 @@ input.hl-w,input.hl-m{background:#d4eefc;border-color:#4fb3e8;font-weight:700}[h
     <div class="field"><label>Order no.</label><input id="ordNo"></div>
     <div class="field"><label>Order date</label><input id="ordDate" type="date"></div>
   </div>
-  <div class="charge-row"><div class="field"><label>Footer</label><input id="hmText" value="আমাদের তৈরী KDM/Hallmark গহনা তে কোনো বাদ দেওয়া হয় না"></div></div>
+  <div class="charge-row"><div class="field"><label>Footer</label><input id="hmText" value="আমাদের তৈরী Hallmark গহনা তে কোনো বাদ দেওয়া হয় না"></div></div>
   <div class="actions"><button class="secondary" id="backBtn">← Back</button><button class="primary" id="printBtn">Print invoice</button></div>
 </section>
-<div class="inv" id="invoice"></div>
+<div id="invoice"></div>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -224,33 +227,39 @@ function gx(i,k,d){return (extras[i]&&extras[i][k]!==undefined)?extras[i][k]:d;}
 function buildExtras(){
   const items=lastItems.filter(i=>i.weight>0);
   $('extras').innerHTML=items.map((it,i)=>`<div class="item"><strong>${escapeHtml(it.name)} · ${it.weight.toFixed(3)} g</strong><div class="grid" style="margin-top:10px">
-  <div class="field"><label>HSN code</label><input data-i="${i}" data-k="hsn" value="${escapeHtml(gx(i,'hsn',''))}"></div>
+  <div class="field"><label>HSN code</label><input data-i="${i}" data-k="hsn" value="${escapeHtml(gx(i,'hsn','7113'))}"></div>
   <div class="field"><label>Purity</label><input data-i="${i}" data-k="purity" value="${escapeHtml(gx(i,'purity',it.metal==='gold'?'22K / 916':'925'))}"></div>
   <div class="field"><label>Gross weight (g)</label><input data-i="${i}" data-k="gross" value="${escapeHtml(gx(i,'gross',it.weight.toFixed(3)))}"></div></div></div>`).join('');
 }
 function renderInvoice(){
   const g=id=>$(id).value,E=escapeHtml,items=lastItems.filter(i=>i.weight>0);
   const ms=new Set(items.map(i=>i.metal)),ml=ms.size>1?'METAL':(ms.has('gold')?'GOLD':'SILVER');
-  let rows='',taxable=0,hm=0;
-  items.forEach((it,i)=>{
+  let taxable=0,hm=0;
+  const rowsData=items.map((it,i)=>{
     const ch=it.making+it.additional,amt=it.metalValue+ch;taxable+=amt+it.hallmark;hm+=it.hallmark;
-    rows+=`<tr><td>${i+1}</td><td class="l">${E(it.name)} (${it.metal==='gold'?'Gold':'Silver'})</td><td>${E(gx(i,'hsn',''))}</td><td>${E(gx(i,'purity',it.metal==='gold'?'22K / 916':'925'))}</td><td>G: ${E(String(gx(i,'gross',it.weight.toFixed(3))))}<br>N: ${it.weight.toFixed(3)}</td><td>${f(it.rate)}</td><td>${f(it.metalValue)}</td><td>${f(ch)}</td><td>${f(amt)}</td></tr>`;
+    return `<tr><td>${i+1}</td><td class="l">${E(it.name)} (${it.metal==='gold'?'Gold':'Silver'})</td><td>${E(gx(i,'hsn','7113'))}</td><td>${E(gx(i,'purity',it.metal==='gold'?'22K / 916':'925'))}</td><td>G: ${E(String(gx(i,'gross',it.weight.toFixed(3))))}<br>N: ${it.weight.toFixed(3)}</td><td>${f(it.rate)}</td><td>${f(it.metalValue)}</td><td>${f(ch)}</td><td>${f(amt)}</td></tr>`;
   });
-  for(let i=items.length;i<6;i++)rows+='<tr><td>&nbsp;</td>'+'<td></td>'.repeat(8)+'</tr>';
   const ig=g('gstType')==='igst',cg=ig?0:taxable*.015,ii=ig?taxable*.03:0,total=taxable+cg*2+ii;
   const rnd=Math.round(total)-total,adv=Math.max(0,Number(g('adv'))||0),grand=Math.round(total)-adv;
   const dots=v=>v?E(v):'..............................................';
-  $('invoice').innerHTML=`<div class="bar">TAX INVOICE</div>
+  const ROWS_LAST=10,ROWS_MID=18,pages=[];let rest=rowsData.slice();
+  while(rest.length>ROWS_LAST)pages.push(rest.splice(0,Math.min(ROWS_MID,rest.length-1)));
+  pages.push(rest);
+  const thead=`<thead><tr><th style="width:5%">No.</th><th style="width:24%">DESCRIPTION</th><th style="width:8%">HSN CODE</th><th style="width:8%">PU-<br>RITY</th><th style="width:12%">GROSS / NET WEIGHT</th><th style="width:11%">RATE OF ${ml}</th><th style="width:12%">VALUE OF ${ml}</th><th style="width:9%">CHARGES</th><th style="width:12%">AMOUNT</th></tr></thead>`;
+  const lowBlock=`<div class="low"><div class="pay">Rupees (in words): <b>${E(words(grand))}</b><br>Bank Name &amp; Branch: ${dots(g('bank'))}<br>Cheque No.: ${dots(g('chqNo'))} &nbsp; Date: ${dmy(g('chqDate'))||'..............'}<br>Payment Received by: ${E(g('recBy'))}<br>Cash: ${dots(g('cash'))}<br>Cheque: ${dots(g('chqAmt'))}<br>Card: ${dots(g('card'))}</div>
+  <div class="tot"><table><tr><td>Hall Mark Charges</td><td>${f(hm)}</td></tr>${ig?`<tr><td>IGST @ 3%</td><td>${f(ii)}</td></tr>`:`<tr><td>CGST @ 1.5%</td><td>${f(cg)}</td></tr><tr><td>SGST @ 1.5%</td><td>${f(cg)}</td></tr>`}<tr class="b"><td>Total</td><td>${f(total)}</td></tr><tr><td>Round off</td><td>${(rnd<0?'-':'+')+f(Math.abs(rnd))}</td></tr><tr><td>Adv. Rs.</td><td>${adv?f(adv):''}</td></tr><tr class="b"><td>Grand Total</td><td>${f(grand)}</td></tr></table></div></div>`;
+  $('invoice').innerHTML=pages.map((rows,pi)=>{
+    const last=pi===pages.length-1,pad='<tr><td>&nbsp;</td>'+'<td></td>'.repeat(8)+'</tr>';
+    return `<div class="inv"><div class="bar">TAX INVOICE${pages.length>1?`<span style="float:right;padding-right:6px;font-weight:400;font-size:10px">Page ${pi+1} of ${pages.length}</span>`:''}</div>
   <div class="top"><img src="${LOGO1}" alt=""><div class="ctr"><h3>MATRI JEWELLERY</h3><div>BISWA SINGHA ROAD, COOCH BEHAR</div><div class="bn">মাতৃ জুয়েলারী<br><small>বিশ্ব সিংহ রোড, কোচবিহার</small></div><b style="font-size:11px">GSTIN: 19ABDFM6545N1ZN</b></div><img src="${LOGO2}" alt=""><div class="mob">Mobile No: 8116632997</div></div>
-  <div class="info"><div><b>No. ${E(g('invNo'))}</b><span></span><b>Date</b><span style="flex:0 0 150px">${dmy(g('invDate'))}</span></div>
+  <div class="info"><div><b class="invno">Invoice No. ${E(g('invNo'))}</b><span></span><b>Date</b><span style="flex:0 0 150px">${dmy(g('invDate'))}</span></div>
   <div><b>Name</b><span>${E(g('cName'))}</span><b>UID</b><span style="flex:0 0 150px">${E(g('cUid'))}</span></div>
   <div><b>Address</b><span>${E(g('cAddr'))}</span><b>Mob.</b><span style="flex:0 0 150px">${E(g('cMob'))}</span></div></div>
-  <table><thead><tr><th style="width:5%">No.</th><th style="width:24%">DESCRIPTION</th><th style="width:8%">HSN CODE</th><th style="width:8%">PU-<br>RITY</th><th style="width:12%">GROSS / NET WEIGHT</th><th style="width:11%">RATE OF ${ml}</th><th style="width:12%">VALUE OF ${ml}</th><th style="width:9%">CHARGES</th><th style="width:12%">AMOUNT</th></tr></thead><tbody>${rows}</tbody></table>
-  <div class="low"><div class="pay">Rupees (in words): <b>${E(words(grand))}</b><br>Bank Name &amp; Branch: ${dots(g('bank'))}<br>Cheque No.: ${dots(g('chqNo'))} &nbsp; Date: ${dmy(g('chqDate'))||'..............'}<br>Payment Received by: ${E(g('recBy'))}<br>Cash: ${dots(g('cash'))}<br>Cheque: ${dots(g('chqAmt'))}<br>Card: ${dots(g('card'))}</div>
-  <div class="tot"><table><tr><td>Hall Mark Charges</td><td>${f(hm)}</td></tr>${ig?`<tr><td>IGST @ 3%</td><td>${f(ii)}</td></tr>`:`<tr><td>CGST @ 1.5%</td><td>${f(cg)}</td></tr><tr><td>SGST @ 1.5%</td><td>${f(cg)}</td></tr>`}<tr class="b"><td>Total</td><td>${f(total)}</td></tr><tr><td>Round off</td><td>${(rnd<0?'-':'+')+f(Math.abs(rnd))}</td></tr><tr><td>Adv. Rs.</td><td>${adv?f(adv):''}</td></tr><tr class="b"><td>Grand Total</td><td>${f(grand)}</td></tr></table></div></div>
+  <div class="tw"><table>${thead}<tbody>${rows.join('')}${pad.repeat(Math.max(0,6-rows.length))}<tr class="fill"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table></div>
+  ${last?lowBlock:'<div class="low" style="justify-content:flex-end;font-style:italic">Continued on next page…</div>'}
   <div class="ord">Order No.: ${dots(g('ordNo'))} &nbsp; Date: ${dmy(g('ordDate'))||'..............'}</div>
   <div class="sig"><span>Signature of Customer</span><span>Signature of Seller</span></div>
-  <div class="ord">${E(g('hmText'))}</div><div class="bar foot"></div>`;
+  <div class="ord">${E(g('hmText'))}</div><div class="bar foot"></div></div>`;}).join('');
 }
 function goNext(){
   calculate();
